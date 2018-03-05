@@ -30,6 +30,7 @@
 		2B47EF352047B2A50060758D /* MPPProfile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPPProfile.h; sourceTree = "<group>"; };
 		2B47EF362047B2A50060758D /* MPPProfile.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPPProfile.m; sourceTree = "<group>"; };
 		2B47EF392047B2D40060758D /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		2BD4A838204D589C00EA12EB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +48,7 @@
 		2B47EF222047B1390060758D = {
 			isa = PBXGroup;
 			children = (
+				2BD4A838204D589C00EA12EB /* README.md */,
 				2B47EF2D2047B1390060758D /* rnMPP */,
 				2B47EF2C2047B1390060758D /* Products */,
 				2B47EF382047B2D40060758D /* Frameworks */,
