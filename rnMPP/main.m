@@ -9,6 +9,11 @@
 #import <Foundation/Foundation.h>
 #import "MPPProfile.h"
 
+void printError( NSString *errDesc ) {
+    NSFileHandle *fileHandle = [ NSFileHandle fileHandleWithStandardError ];
+    [ fileHandle writeData:[ errDesc dataUsingEncoding:NSUTF8StringEncoding ]];
+}
+
 void printHelp() {
     printf("Usage: \n");
     printf("$ rnMPP: (no argument) show short description for every `.mobieprovision` in user's `~/Library/MobileDevice/Provisioning Profiles` folder.\n");
@@ -49,18 +54,95 @@ void printProfilesInfoInLibrary() {
     }
 }
 
-void renameProfile(NSString *path, NSString* pattern) {
+void printProfile( NSString *path ) {
     NSString *fullPath = [ path hasPrefix:@"/" ] ? path : [ NSFileManager.defaultManager.currentDirectoryPath stringByAppendingPathComponent:path ];
-    
+    NSFileManager *fileMan = [ NSFileManager defaultManager ];
+    if (![ fileMan fileExistsAtPath:fullPath ]) return;
+    MPPProfile *profile = [[ MPPProfile alloc ] initWithFile:fullPath ];
+    if ( profile == nil ) return;
+    printf( "%s\n", profile.description.UTF8String );
 }
 
-int main(int argc, const char * argv[]) {
+void renameProfile( NSString *path, NSString* pattern ) {
+    NSString *fullPath = [ path hasPrefix:@"/" ] ? path : [ NSFileManager.defaultManager.currentDirectoryPath stringByAppendingPathComponent:path ];
+    NSFileManager *fileMan = [ NSFileManager defaultManager ];
+    if (![ fileMan fileExistsAtPath:fullPath ]) {
+        printError([ NSString stringWithFormat:@"\"%@\" not found!", path ]);
+        return;
+    }
+    MPPProfile *profile = [[ MPPProfile alloc ] initWithFile:fullPath ];
+    if ( profile == nil ) {
+        printError([ NSString stringWithFormat:@"Faile to load \"%@\" as provision profile file!", path ]);
+        return;
+    }
+    NSString *destName = pattern;
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%name%" withString:profile.name ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%uuid%" withString:profile.uuid ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%appid%" withString:profile.appIdName ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%create%" withString:profile.creationDate ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%expire%" withString:profile.expirationDate ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"%team%" withString:profile.teamName ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"/" withString:@"_" ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@":" withString:@"_" ];
+    destName = [ destName stringByReplacingOccurrencesOfString:@"*" withString:@"Wildcat" ];
+    if (![ destName.pathExtension isEqualToString:@"mobileprovision" ]) {
+        destName = [ destName stringByAppendingPathExtension:@"mobileprovision" ];
+    }
+    printf( "%s => %s\n", fullPath.lastPathComponent.UTF8String, destName.UTF8String );
+    NSString *fullDestPath = [[ fullPath stringByDeletingLastPathComponent ] stringByAppendingPathComponent:destName ];
+    if ([ fullDestPath isEqualToString:fullPath ]) {
+        printf( "Ignore...\n" );
+        return;
+    }
+    NSError *err = nil;
+    [ fileMan moveItemAtPath:fullPath toPath:fullDestPath error:nil ];
+    if ( err != nil ) {
+        printError( err.localizedDescription );
+    }
+}
+
+void renameProfilesInLibrary( NSString *pattern ) {
+    NSString *folder = [ NSHomeDirectory() stringByAppendingPathComponent:@"Library/MobileDevice/Provisioning Profiles" ];
+    NSArray *items = [ NSFileManager.defaultManager contentsOfDirectoryAtPath:folder error:NULL ];
+    if ( items != nil && items.count > 0 ) {
+        for ( NSString *item in items ) {
+            if ([ item.pathExtension isEqualToString:@"mobileprovision" ]) {
+                renameProfile([ folder stringByAppendingPathComponent:item ], pattern );
+            }
+        }
+    }
+}
+
+int main( int argc, const char * argv[] ) {
     @autoreleasepool {
         printf( "Rename Mobile Provision Profile by soleilpqd@gmail.com. Ver 1.0.\n" );
         printf( "----\n" );
-//        NSArray<NSString*> *formatKeys = @[@"%name%", @"%uuid%", @"%appid%", @"%create%", @"%expire%", @"%team%"];
-        printProfilesInfoInLibrary();
-//        printHelp();
+        switch ( argc ) {
+            case 1:
+                printProfilesInfoInLibrary();
+                break;
+            case 2:
+            {
+                NSString *arg1 = [ NSString stringWithUTF8String:argv[1] ];
+                if ([ arg1 isEqualToString:@"help" ]) {
+                    printHelp();
+                } else if ([ arg1 containsString:@"%" ]) {
+                    renameProfilesInLibrary( arg1 );
+                } else {
+                    printProfile( arg1 );
+                }
+            }
+                break;
+            case 3:
+            {
+                NSString *arg1 = [ NSString stringWithUTF8String:argv[1] ];
+                NSString *arg2 = [ NSString stringWithUTF8String:argv[2] ];
+                renameProfile( arg2, arg1 );
+            }
+                break;
+            default:
+                break;
+        }
     }
     return 0;
 }
