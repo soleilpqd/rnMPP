@@ -38,4 +38,6 @@ typedef NS_ENUM(NSUInteger, MPPProfileType) {
 
 -( nullable instancetype )initWithFile:( nonnull NSString* )path;
 
++( nullable NSDate* )convertDate:( nonnull NSString* )inputDate;
+
 @end

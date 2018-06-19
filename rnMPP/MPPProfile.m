@@ -176,4 +176,10 @@
     }
 }
 
++( NSDate* )convertDate:(NSString *)inputDate {
+    NSDateFormatter *dateFormatter = [[ NSDateFormatter alloc ] init ];
+    dateFormatter.dateFormat = @"y-MM-dd HH:mm:ss Z";
+    return [ dateFormatter dateFromString:inputDate ];
+}
+
 @end
